@@ -54,6 +54,7 @@ plugin_blacklist:
 - vision_pose_estimate
 - vision_speed_estimate
 - mount_control
+- global_position
 
 plugin_whitelist:
 # mavros plugins
@@ -63,13 +64,14 @@ plugin_whitelist:
 - param
 - waypoint
 - rc_io
-- global_position
+
 - local_position
 - setpoint_raw
 - setpoint_position
 - setpoint_velocity
 - setpoint_accel
 - acfly_slam_sensor
+- cam_imu_sync
 
 # mavros extra plugins
 - vibration

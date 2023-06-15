@@ -501,5 +501,9 @@ private:
 
     std::atomic<bool>     fcu_caps_known;
     std::atomic<uint64_t> fcu_capabilities;
+
+public:
+    int64_t   offset_time;
+    bool      first_sync_flag = false;
 };
 } // namespace mavros

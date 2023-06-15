@@ -140,8 +140,18 @@ private:
         auto baselink_linear =
             ftf::transform_frame_enu_baselink(enu_velocity, enu_orientation.inverse());
 
-        auto odom            = boost::make_shared<nav_msgs::Odometry>();
-        odom->header         = m_uas->synchronized_header(frame_id, pos_ned.time_boot_ms);
+        auto odom = boost::make_shared<nav_msgs::Odometry>();
+
+        if (m_uas->first_sync_flag) {
+            odom->header.frame_id = frame_id;
+            int64_t odomTime      = (int64_t)(pos_ned.time_boot_ms / 1000UL) * 1000000000 +
+                               (int64_t)(pos_ned.time_boot_ms % 1000) * 1000000 +
+                               m_uas->offset_time;
+            odom->header.stamp = ros::Time(odomTime / 1000000000, odomTime % 1000000000);
+        } else
+            odom->header = m_uas->synchronized_header(frame_id, pos_ned.time_boot_ms);
+
+        // odom->header         = m_uas->synchronized_header(frame_id, pos_ned.time_boot_ms);
         odom->child_frame_id = tf_child_frame_id;
 
         tf::pointEigenToMsg(enu_position, odom->pose.pose.position);
@@ -208,8 +218,16 @@ private:
         auto baselink_linear =
             ftf::transform_frame_enu_baselink(enu_velocity, enu_orientation.inverse());
 
-        auto odom            = boost::make_shared<nav_msgs::Odometry>();
-        odom->header         = m_uas->synchronized_header(frame_id, pos_ned.time_usec);
+        auto odom = boost::make_shared<nav_msgs::Odometry>();
+
+        if (m_uas->first_sync_flag) {
+            odom->header.frame_id = frame_id;
+            int64_t odomTime      = (int64_t)(pos_ned.time_usec / 1000000UL) * 1000000000 +
+                               (int64_t)(pos_ned.time_usec % 1000000) * 1000 + m_uas->offset_time;
+            odom->header.stamp = ros::Time(odomTime / 1000000000, odomTime % 1000000000);
+        } else
+            odom->header = m_uas->synchronized_header(frame_id, pos_ned.time_usec);
+
         odom->child_frame_id = tf_child_frame_id;
 
         tf::pointEigenToMsg(enu_position, odom->pose.pose.position);
@@ -217,9 +235,9 @@ private:
         tf::vectorEigenToMsg(baselink_linear, odom->twist.twist.linear);
         odom->twist.twist.angular = baselink_angular_msg;
 
-        odom->pose.covariance[0]  = pos_ned.covariance[0];  // x
-        odom->pose.covariance[7]  = pos_ned.covariance[9];  // y
-        odom->pose.covariance[14] = pos_ned.covariance[17]; // z
+        odom->pose.covariance[0]  = pos_ned.covariance[0];   // x
+        odom->pose.covariance[7]  = pos_ned.covariance[9];   // y
+        odom->pose.covariance[14] = pos_ned.covariance[17];  // z
 
         odom->twist.covariance[0]  = pos_ned.covariance[24]; // vx
         odom->twist.covariance[7]  = pos_ned.covariance[30]; // vy

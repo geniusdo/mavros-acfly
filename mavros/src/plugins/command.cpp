@@ -483,6 +483,9 @@ private:
     bool trigger_control_cb(mavros_msgs::CommandTriggerControl::Request  &req,
                             mavros_msgs::CommandTriggerControl::Response &res) {
         using mavlink::common::MAV_CMD;
+        if (req.trigger_enable == 0 || req.sequence_reset == 1 || req.trigger_pause == 1)
+            m_uas->first_sync_flag = false;
+
         return send_command_long_and_wait(
             false, enum_value(MAV_CMD::DO_TRIGGER_CONTROL), 1, (req.trigger_enable) ? 1.0 : 0.0,
             (req.sequence_reset) ? 1.0 : 0.0, (req.trigger_pause) ? 1.0 : 0.0, 0, 0, 0, 0,

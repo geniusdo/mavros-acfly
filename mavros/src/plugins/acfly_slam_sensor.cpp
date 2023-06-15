@@ -17,6 +17,7 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <nav_msgs/Odometry.h>
 #include <std_msgs/Bool.h>
 
 namespace mavros {
@@ -39,7 +40,7 @@ public:
         get_sensor_info(&ass_nh);
 
         // 传感器到飞控body系的三维变换
-        Eigen::Affine3d     tr_sensor_body{};
+
         std::vector<double> rot{}, trans{};
         std::string         sensor_id, body_id;
         ass_nh.param<std::string>("sensor_id", sensor_id, "camera");
@@ -85,6 +86,7 @@ public:
             pose_sub = ass_nh.subscribe("pose", 10, &AcflySlamSensorPlugin::pose_cb, this);
             pose_cov_sub =
                 ass_nh.subscribe("pose_cov", 10, &AcflySlamSensorPlugin::pose_cov_cb, this);
+            odom_sub = ass_nh.subscribe("odom", 10, &AcflySlamSensorPlugin::odom_cb, this);
         }
 
         // 重置位置传感器
@@ -95,6 +97,8 @@ public:
 
         // 回环检测
         loop_sub = ass_nh.subscribe("loop", 10, &AcflySlamSensorPlugin::loop_cb, this);
+
+        debug_pub = ass_nh.advertise<geometry_msgs::PoseStamped>("debug", 1000);
     }
 
     Subscriptions get_subscriptions() override {
@@ -107,9 +111,12 @@ private:
 
     ros::Subscriber pose_sub;
     ros::Subscriber pose_cov_sub;
+    ros::Subscriber odom_sub;
     ros::Subscriber reset_sub;
     ros::Subscriber block_sub;
     ros::Subscriber loop_sub;
+    ros::Publisher  debug_pub;
+    Eigen::Affine3d tr_sensor_body{};
 
     std::string tf_frame_id;
     std::string tf_child_frame_id;
@@ -151,6 +158,37 @@ private:
 
             update_position_sensor(pose_cov_stamp->header.stamp, tr.translation(),
                                    Eigen::Vector3d::Zero(), Eigen::Quaterniond(tr.rotation()));
+        }
+    }
+
+    void odom_cb(const nav_msgs::Odometry::ConstPtr &odom_msg) {
+        if (!m_uas->get_pos_sensor_connection_status(sensor_ind)) {
+            register_position_sensor();
+        } else {
+            Eigen::Affine3d tr;
+            Eigen::Matrix<double,6,1> vel;
+            tf::poseMsgToEigen(odom_msg->pose.pose, tr);
+            tf::twistMsgToEigen(odom_msg->twist.twist, vel);
+            Eigen::Vector3d linear_vel;
+            linear_vel << vel[0], vel[1], vel[2];
+
+            tr = tr_sensor_body.inverse()*tr;
+
+            // ROS_INFO("%lf,%lf,%lf", tr_sensor_body(0, 0), tr_sensor_body(0, 1),
+            //          tr_sensor_body(0, 2));
+            // ROS_INFO("%lf,%lf,%lf", tr_sensor_body(1, 0), tr_sensor_body(1, 1),
+            //          tr_sensor_body(1, 2));
+            // ROS_INFO("%lf,%lf,%lf", tr_sensor_body(2, 0), tr_sensor_body(2, 1),
+            //          tr_sensor_body(2, 2));
+            // ROS_INFO("--------------------");
+
+            geometry_msgs::PoseStamped debug_msg;
+            debug_msg.header = odom_msg->header;
+            tf::poseEigenToMsg(tr, debug_msg.pose);
+            debug_pub.publish(debug_msg);
+
+            update_position_sensor(odom_msg->header.stamp, tr.translation(),
+                                   linear_vel, Eigen::Quaterniond(tr.rotation()));
         }
     }
 

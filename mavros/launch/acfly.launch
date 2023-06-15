@@ -4,8 +4,8 @@
 
 <launch>
   <!-- mavlink连接参数 -->
-  <arg name="fcu_url"             default="/dev/ttyACM0:115200" />
-  <arg name="gcs_url"             default="udp-b://@" />
+  <arg name="fcu_url"             default="/dev/ttyTHS0:921600" />
+  <arg name="gcs_url"             default="udp://@" />
   <arg name="tgt_system"          default="1" />
   <arg name="tgt_component"       default="1" />
   <arg name="log_output"          default="screen" />
@@ -15,6 +15,7 @@
   <!-- mavros参数文件 -->
   <arg name="pluginlists_yaml"    default="$(find mavros)/launch/acfly_pluginlist.yaml" />
   <arg name="config_yaml"         default="$(find mavros)/launch/acfly_config.yaml" />
+  <remap from="/mavros/acfly_slam_sensor/odom" to="/odometry/imu" />
 
   <!-- 启动mavlink通信 -->
   <include file="$(find mavros)/launch/node.launch">

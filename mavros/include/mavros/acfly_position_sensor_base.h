@@ -25,11 +25,11 @@ public:
 
     void get_sensor_info(ros::NodeHandle *nh) {
         nh->param<std::string>("sensor/name", sensor_name, "ROS");
-        nh->param("sensor/index", sensor_ind, 15);                  // 最高16路，数组形式，0~15
-        nh->param("sensor/type", sensor_type, 1);                   // 相对定位
-        nh->param("sensor/data_frame", sensor_data_frame, 4);       // SLAM坐标系下的位置
-        nh->param("sensor/data_type", sensor_data_type, 2);         // 三轴位置
-        nh->param<float>("sensor/delay", sensor_delay, 0.05);       // 延时(s)
+        nh->param("sensor/index", sensor_ind, 15);            // 最高16路，数组形式，0~15
+        nh->param("sensor/type", sensor_type, 1);             // 相对定位
+        nh->param("sensor/data_frame", sensor_data_frame, 4); // SLAM坐标系下的位置
+        nh->param("sensor/data_type", sensor_data_type, 2);   // 三轴位置
+        nh->param<float>("sensor/delay", sensor_delay, 0.05); // 延时(s)
         nh->param<float>("sensor/trust_xy", sensor_trust_xy, 0.01); // xy方向方差(m^2)
         nh->param<float>("sensor/trust_z", sensor_trust_z, 0.01);   // z方向方差(m^2)
     }
@@ -90,6 +90,10 @@ public:
         up.AttQuat[3] = att.z();
 
         // 传感器测量信息
+        auto   time_offset = m_uas->get_time_offset();
+        double offset =
+            double(time_offset / 1000000000) + double((time_offset % 1000000000)) / 1000000000;
+        //up.delay = ros::Time::now().toSec() - offset - stamp.toSec();
         up.delay   = ros::Time::now().toSec() - stamp.toSec();
         up.trustXY = sensor_trust_xy;
         up.trustZ  = sensor_trust_z;

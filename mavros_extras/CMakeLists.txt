@@ -102,6 +102,7 @@ add_dependencies(mavros_extras
 target_link_libraries(mavros_extras
   ${mavros_LIBRARIES}
   ${catkin_LIBRARIES}
+  yaml-cpp
 )
 
 ## Declare a cpp executable

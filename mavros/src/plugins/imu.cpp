@@ -12,6 +12,9 @@
  *
  */
 
+// MODIFY
+// we set IMU_RAW message containing all scaled acc gyro and mag info.
+
 #include <cmath>
 #include <eigen_conversions/eigen_msg.h>
 #include <mavros/mavros_plugin.h>
@@ -32,7 +35,8 @@ static constexpr double MILLIT_TO_TESLA = 1000.0;
 // millRad/Sec to Rad/Sec coeff
 static constexpr double MILLIRS_TO_RADSEC = 1.0e-3;
 // millG to m/s**2 coeff
-static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0;
+
+static constexpr double MILLIG_TO_MS2 = 9.80665 / 1000.0; // gravityAcc in Acfly
 // millm/s**2 to m/s**2 coeff
 static constexpr double MILLIMS2_TO_MS2 = 1.0e-3;
 // millBar to Pascal coeff
@@ -79,7 +83,7 @@ public:
         imu_nh.param<std::string>("base_frame_flu_id", base_frame_flu_id, "base_link");
         imu_nh.param<std::string>("base_frame_frd_id", base_frame_frd_id, "base_link_frd");
         imu_nh.param("linear_acceleration_stdev", linear_stdev,
-                     0.0003); // MPU6000默认参数
+                     0.0003);                // MPU6000默认参数
         imu_nh.param("angular_velocity_stdev", angular_stdev,
                      0.02 * (M_PI / 180.0)); // MPU6000默认参数
         imu_nh.param("orientation_stdev", orientation_stdev, 1.0);
@@ -140,6 +144,9 @@ private:
     ftf::Covariance3d unk_orientation_cov;
     ftf::Covariance3d magnetic_cov;
 
+    bool      first_sync_flag = false;
+    ros::Time offset_stamp;
+
     /* mid-level functions */
     /* 中间件函数 */
 
@@ -179,8 +186,20 @@ private:
 
         // Fill message header
         // 填充信息标头
-        imu_enu_msg->header = m_uas->synchronized_header(base_frame_flu_id, time_boot_ms);
-        imu_ned_msg->header = m_uas->synchronized_header(base_frame_frd_id, time_boot_ms);
+        std_msgs::Header header;
+        header.frame_id = base_frame_flu_id;
+        if (m_uas->first_sync_flag == false) {
+            header.stamp = m_uas->synchronise_stamp(time_boot_ms);
+        } else {
+            int64_t imuTime = (int64_t)(time_boot_ms / 1000) * 1000000000 +
+                              (int64_t)(time_boot_ms % 1000) * 1000000 + m_uas->offset_time;
+            header.stamp = ros::Time((int64_t)(imuTime / 1000000000), // t_sec
+                                     (int64_t)(imuTime % 1000000000));
+        }
+
+        imu_enu_msg->header = header;
+        header.frame_id     = base_frame_frd_id;
+        imu_ned_msg->header = header;
 
         // Convert from Eigen::Quaternond to geometry_msgs::Quaternion
         // 将信息从Eigen::Quaternond格式转化为to geometry_msgs::Quaternion格式
@@ -268,6 +287,7 @@ private:
         imu_msg->orientation_covariance         = unk_orientation_cov;
         imu_msg->angular_velocity_covariance    = angular_velocity_cov;
         imu_msg->linear_acceleration_covariance = linear_acceleration_cov;
+
 
         // Publish message [FLU frame]
         // 发布FLU坐标系下的imu_raw信息
@@ -388,11 +408,21 @@ private:
         ROS_INFO_COND_NAMED(!has_hr_imu, "imu", "IMU: High resolution IMU detected!");
         has_hr_imu = true;
 
-        auto header = m_uas->synchronized_header(base_frame_flu_id, imu_hr.time_usec);
-        /**
-         * @todo Make more paranoic check of HIGHRES_IMU.fields_updated
-         * @todo 对HIGHRES_IMU.fields_updated进行更细致的检查
-         */
+        std_msgs::Header header;
+        header.frame_id = base_frame_flu_id;
+
+        if (m_uas->first_sync_flag == false) {
+            header.stamp = m_uas->synchronise_stamp(imu_hr.time_usec);
+        } else {
+            int64_t imuTime = (int64_t)(imu_hr.time_usec / 1000000) * 1000000000 +
+                              (int64_t)(imu_hr.time_usec % 1000000) * 1000 + m_uas->offset_time;
+            header.stamp = ros::Time((int64_t)(imuTime / 1000000000), // t_sec
+                                     (int64_t)(imuTime % 1000000000));
+        }
+
+        //  * @todo Make more paranoic check of HIGHRES_IMU.fields_updated
+        //  * @todo 对HIGHRES_IMU.fields_updated进行更细致的检查
+        //  */
 
         /**
          * Check if accelerometer + gyroscope data are available.
@@ -471,35 +501,49 @@ private:
         ROS_INFO_COND_NAMED(!has_raw_imu, "imu", "IMU: Raw IMU message used.");
         has_raw_imu = true;
 
-        if (has_hr_imu || has_scaled_imu)
-            return;
+        // if (has_hr_imu || has_scaled_imu)
+        //     return;
 
         auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
-        auto header  = m_uas->synchronized_header(base_frame_flu_id, imu_raw.time_usec);
+        // auto header  = m_uas->synchronized_header(base_frame_flu_id, imu_raw.time_usec);
+        std_msgs::Header header;
+        header.frame_id = base_frame_flu_id;
+        //ROS_INFO("IMU USEC: %ld",imu_raw.time_usec);
+        if (m_uas->first_sync_flag == false) {
+            header.stamp = m_uas->synchronise_stamp(imu_raw.time_usec);
+        } else {
+            int64_t imuTime = (int64_t)(imu_raw.time_usec / 1000000) * 1000000000 +
+                              (int64_t)(imu_raw.time_usec % 1000000) * 1000 + m_uas->offset_time;
+            header.stamp = ros::Time((int64_t)(imuTime / 1000000000), // t_sec
+                                     (int64_t)(imuTime % 1000000000));
+        }
 
         auto gyro_flu = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(
             Eigen::Vector3d(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro) * MILLIRS_TO_RADSEC);
         auto accel_frd = Eigen::Vector3d(imu_raw.xacc, imu_raw.yacc, imu_raw.zacc);
         auto accel_flu = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(accel_frd);
+        accel_frd *= MILLIG_TO_MS2;
+        accel_flu *= MILLIG_TO_MS2;
 
-        if (m_uas->is_ardupilotmega()) {
-            accel_frd *= MILLIG_TO_MS2;
-            accel_flu *= MILLIG_TO_MS2;
-        } else if (m_uas->is_px4()) {
-            accel_frd *= MILLIMS2_TO_MS2;
-            accel_flu *= MILLIMS2_TO_MS2;
-        }
+        // if (m_uas->is_ardupilotmega()) {
+        //     accel_frd *= MILLIG_TO_MS2;
+        //     accel_flu *= MILLIG_TO_MS2;
+        // } else if (m_uas->is_px4()) {
+        //     accel_frd *= MILLIMS2_TO_MS2;
+        //     accel_flu *= MILLIMS2_TO_MS2;
+        // }
 
         publish_imu_data_raw(header, gyro_flu, accel_flu, accel_frd);
 
-        if (!m_uas->is_ardupilotmega()) {
-            ROS_WARN_THROTTLE_NAMED(60, "imu",
-                                    "IMU: linear acceleration on RAW_IMU known on APM only.");
-            ROS_WARN_THROTTLE_NAMED(60, "imu",
-                                    "IMU: ~imu/data_raw stores unscaled raw acceleration report.");
-            linear_accel_vec_flu.setZero();
-            linear_accel_vec_frd.setZero();
-        }
+        // if (!m_uas->is_ardupilotmega()) {
+        //     ROS_WARN_THROTTLE_NAMED(60, "imu",
+        //                             "IMU: linear acceleration on RAW_IMU known on APM only.");
+        //     ROS_WARN_THROTTLE_NAMED(60, "imu",
+        //                             "IMU: ~imu/data_raw stores unscaled raw acceleration
+        //                             report.");
+        //     linear_accel_vec_flu.setZero();
+        //     linear_accel_vec_frd.setZero();
+        // }
 
         /**
          * Magnetic field data:
@@ -514,14 +558,25 @@ private:
 
     void handle_scaled_imu(const mavlink::mavlink_message_t *msg,
                            mavlink::common::msg::SCALED_IMU &imu_raw) {
-        if (has_hr_imu)
+        if (has_hr_imu || has_raw_imu)
             return;
 
         ROS_INFO_COND_NAMED(!has_scaled_imu, "imu", "IMU: Scaled IMU message used.");
         has_scaled_imu = true;
 
-        auto imu_msg = boost::make_shared<sensor_msgs::Imu>();
-        auto header  = m_uas->synchronized_header(base_frame_flu_id, imu_raw.time_boot_ms);
+        // auto             imu_msg = boost::make_shared<sensor_msgs::Imu>();
+        std_msgs::Header header;
+        header.frame_id = base_frame_flu_id;
+        if (m_uas->first_sync_flag == false) {
+            header.stamp = m_uas->synchronise_stamp(imu_raw.time_boot_ms);
+        } else {
+            int64_t imuTime = (int64_t)(imu_raw.time_boot_ms / 1000) * 1000000000 +
+                              (int64_t)(imu_raw.time_boot_ms % 1000) * 1000000 + m_uas->offset_time;
+            header.stamp = ros::Time((int64_t)(imuTime / 1000000000), // t_sec
+                                     (int64_t)(imuTime % 1000000000));
+        }
+
+        // auto header     = m_uas->synchronized_header(base_frame_flu_id, imu_raw.time_boot_ms);
 
         auto gyro_flu = ftf::transform_frame_aircraft_baselink<Eigen::Vector3d>(
             Eigen::Vector3d(imu_raw.xgyro, imu_raw.ygyro, imu_raw.zgyro) * MILLIRS_TO_RADSEC);

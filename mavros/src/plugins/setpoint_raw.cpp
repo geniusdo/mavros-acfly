@@ -127,7 +127,7 @@ private:
         auto  velocity = ftf::transform_frame_ned_enu(Eigen::Vector3d(tgt.vx, tgt.vy, tgt.vz));
         auto  af       = ftf::transform_frame_ned_enu(Eigen::Vector3d(tgt.afx, tgt.afy, tgt.afz));
         float yaw      = ftf::quaternion_get_yaw(ftf::transform_orientation_aircraft_baselink(
-                 ftf::transform_orientation_ned_enu(ftf::quaternion_from_rpy(0.0, 0.0, tgt.yaw))));
+            ftf::transform_orientation_ned_enu(ftf::quaternion_from_rpy(0.0, 0.0, tgt.yaw))));
         Eigen::Vector3d ang_vel_ned(0.0, 0.0, tgt.yaw_rate);
         auto            ang_vel_enu = ftf::transform_frame_ned_enu(ang_vel_ned);
         float           yaw_rate    = ang_vel_enu.z();
@@ -215,6 +215,16 @@ private:
             tf::vectorMsgToEigen(req->velocity, velocity);
             tf::vectorMsgToEigen(req->acceleration_or_force, af);
 
+            // modified
+            // auto enu_orientation_msg = m_uas->get_attitude_orientation_enu();
+
+            // Eigen::Quaterniond enu_orientation;
+            // tf::quaternionMsgToEigen(enu_orientation_msg, enu_orientation);
+
+            // position = ftf::transform_frame_baselink_enu(position, enu_orientation);
+            // velocity = ftf::transform_frame_baselink_enu(velocity, enu_orientation);
+            //
+
             // Transform frame ENU->NED
             // 坐标系从ENU转到NED
             if (req->coordinate_frame == mavros_msgs::PositionTarget::FRAME_BODY_NED ||
@@ -223,9 +233,9 @@ private:
                 velocity = ftf::transform_frame_baselink_aircraft(velocity);
                 af       = ftf::transform_frame_baselink_aircraft(af);
                 yaw      = ftf::quaternion_get_yaw(
-                         // 视FLU为绝对坐标系
+                    // 视FLU为绝对坐标系
                     ftf::transform_orientation_absolute_frame_baselink_aircraft(
-                             ftf::quaternion_from_rpy(0.0, 0.0, req->yaw)));
+                        ftf::quaternion_from_rpy(0.0, 0.0, req->yaw)));
             } else if (req->coordinate_frame == mavros_msgs::PositionTarget::FRAME_LOCAL_NED ||
                        req->coordinate_frame ==
                            mavros_msgs::PositionTarget::FRAME_LOCAL_OFFSET_NED) {
@@ -233,8 +243,8 @@ private:
                 velocity = ftf::transform_frame_enu_ned(velocity);
                 af       = ftf::transform_frame_enu_ned(af);
                 yaw      = ftf::quaternion_get_yaw(
-                         ftf::transform_orientation_baselink_aircraft(ftf::transform_orientation_enu_ned(
-                             ftf::quaternion_from_rpy(0.0, 0.0, req->yaw))));
+                    ftf::transform_orientation_baselink_aircraft(ftf::transform_orientation_enu_ned(
+                        ftf::quaternion_from_rpy(0.0, 0.0, req->yaw))));
             } else {
                 ROS_ERROR_THROTTLE_NAMED(5, "setpoint_raw", "SPR: Invalid frame.");
                 return;
@@ -274,7 +284,7 @@ private:
             velocity = ftf::transform_frame_enu_ned(velocity);
             af       = ftf::transform_frame_enu_ned(af);
             yaw      = ftf::quaternion_get_yaw(ftf::transform_orientation_baselink_aircraft(
-                     ftf::transform_orientation_enu_ned(ftf::quaternion_from_rpy(0.0, 0.0, req->yaw))));
+                ftf::transform_orientation_enu_ned(ftf::quaternion_from_rpy(0.0, 0.0, req->yaw))));
             Eigen::Vector3d ang_vel_enu(0.0, 0.0, req->yaw_rate);
             auto            ang_vel_ned = ftf::transform_frame_enu_ned(ang_vel_enu);
             yaw_rate                    = ang_vel_ned.z();
