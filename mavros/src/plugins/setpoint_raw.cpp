@@ -16,10 +16,10 @@
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 
+#include "log.hpp"
 #include <mavros_msgs/AttitudeTarget.h>
 #include <mavros_msgs/GlobalPositionTarget.h>
 #include <mavros_msgs/PositionTarget.h>
-
 namespace mavros {
 namespace std_plugins {
 /**
@@ -254,6 +254,11 @@ private:
             Eigen::Vector3d ang_vel_enu(0.0, 0.0, req->yaw_rate);
             auto            ang_vel_ned = ftf::transform_frame_enu_ned(ang_vel_enu);
             yaw_rate                    = ang_vel_ned.z();
+
+#ifdef LOG_ENABLE
+            LOG_TRAJ(req->header.stamp.toNSec(), position[0], position[1], position[2], velocity[0],
+                     velocity[1], velocity[2], yaw, yaw_rate, "setPointRaw");
+#endif
 
             set_position_target_local_ned(req->header.stamp.toNSec() / 1000000,
                                           req->coordinate_frame, req->type_mask, position, velocity,

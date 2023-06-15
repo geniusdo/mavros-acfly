@@ -15,11 +15,11 @@
 #include <mavros/mavros_plugin.h>
 #include <mavros/setpoint_mixin.h>
 
+#include "log.hpp"
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Bool.h>
-#include "log.hpp"
 namespace mavros {
 namespace std_plugins {
 /**
@@ -165,14 +165,14 @@ private:
         if (!m_uas->get_pos_sensor_connection_status(sensor_ind)) {
             register_position_sensor();
         } else {
-            Eigen::Affine3d tr;
-            Eigen::Matrix<double,6,1> vel;
+            Eigen::Affine3d             tr;
+            Eigen::Matrix<double, 6, 1> vel;
             tf::poseMsgToEigen(odom_msg->pose.pose, tr);
             tf::twistMsgToEigen(odom_msg->twist.twist, vel);
             Eigen::Vector3d linear_vel;
             linear_vel << vel[0], vel[1], vel[2];
 
-            tr = tr_sensor_body.inverse()*tr;
+            tr = tr_sensor_body.inverse() * tr;
 
             // ROS_INFO("%lf,%lf,%lf", tr_sensor_body(0, 0), tr_sensor_body(0, 1),
             //          tr_sensor_body(0, 2));
@@ -187,8 +187,16 @@ private:
             tf::poseEigenToMsg(tr, debug_msg.pose);
             debug_pub.publish(debug_msg);
 
-            update_position_sensor(odom_msg->header.stamp, tr.translation(),
-                                   linear_vel, Eigen::Quaterniond(tr.rotation()));
+#ifdef LOG_ENABLE
+            LOG_ODOM(timeConvert(odom_msg->header.stamp.sec, odom_msg->header.stamp.nsec),
+                     tr.translation()[0], tr.translation()[1], tr.translation()[2],
+                     Eigen::Quaterniond(tr.rotation()).x(), Eigen::Quaterniond(tr.rotation()).y(),
+                     Eigen::Quaterniond(tr.rotation()).z(), Eigen::Quaterniond(tr.rotation()).w(),
+                     linear_vel[0], linear_vel[1], linear_vel[2], 0.0, 0.0, 0.0, "poseSensor");
+#endif
+
+            update_position_sensor(odom_msg->header.stamp, tr.translation(), linear_vel,
+                                   Eigen::Quaterniond(tr.rotation()));
         }
     }
 

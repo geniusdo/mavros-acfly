@@ -21,6 +21,9 @@
 #include <tuple>
 #include <vector>
 
+//comment this line to disable log
+#define LOG_ENABLE
+
 
 namespace mavros {
 namespace plugin {
