@@ -12,10 +12,10 @@
  */
 
 #include <mavros/mavros.h>
-
+#include "log.hpp"
 int main(int argc, char *argv[]) {
     ros::init(argc, argv, "mavros");
-
+    initLog("/tmp/MavrosLog");
     mavros::MavRos mavros;
     mavros.spin();
 

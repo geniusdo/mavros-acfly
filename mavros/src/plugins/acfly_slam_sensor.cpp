@@ -19,7 +19,7 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Bool.h>
-
+#include "log.hpp"
 namespace mavros {
 namespace std_plugins {
 /**

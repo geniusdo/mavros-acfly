@@ -1,6 +1,28 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mavros)
 
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "-std=c++17 -O3" ) 
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g -pthread")
+ADD_COMPILE_OPTIONS(-std=c++17 )
+ADD_COMPILE_OPTIONS(-fPIC)
+set(CMAKE_C_FLAGS“$ {CMAKE_C_FLAGS} -fPIC”)
+set(CMAKE_CXX_FLAGS“$ {CMAKE_CXX_FLAGS} -fPIC”)
+#set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+SET(ROOT_DIR ${CMAKE_SOURCE_DIR}/..)
+include_directories(${ROOT_DIR}/3rdLib/nanolog)
+add_library(nanolog STATIC 
+      ${ROOT_DIR}/3rdLib/nanolog/Cycles.cc
+      ${ROOT_DIR}/3rdLib/nanolog/Log.cc
+	    ${ROOT_DIR}/3rdLib/nanolog/NanoLog.cc
+	    ${ROOT_DIR}/3rdLib/nanolog/Perf.cc
+	    ${ROOT_DIR}/3rdLib/nanolog/PerfHelper.cc
+	    ${ROOT_DIR}/3rdLib/nanolog/RuntimeLogger.cc
+	    ${ROOT_DIR}/3rdLib/nanolog/TimeTrace.cc
+	    ${ROOT_DIR}/3rdLib/nanolog/Util.cc   
+	    ${ROOT_DIR}/3rdLib/nanolog/GeneratedCode.cc   
+	    )
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -110,6 +132,7 @@ target_link_libraries(mavros
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
   ${GeographicLib_LIBRARIES}
+  nanolog -lrt -pthread
 )
 if(NOT APPLE)
   target_link_libraries(mavros
@@ -156,6 +179,7 @@ add_dependencies(mavros_plugins
 target_link_libraries(mavros_plugins
   mavros
   ${catkin_LIBRARIES}
+  nanolog -lrt -pthread
 )
 
 ## Declare a cpp executable
@@ -168,6 +192,7 @@ add_dependencies(mavros_node
 target_link_libraries(mavros_node
   mavros
   ${catkin_LIBRARIES}
+  nanolog -lrt -pthread
 )
 
 add_executable(gcs_bridge
