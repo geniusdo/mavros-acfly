@@ -25,17 +25,19 @@ namespace NanoLogInternal {
  * handle the fencing.
  */
 class Fence {
-  public:
-
+public:
     /**
      * This method creates a boundary across which load instructions cannot
      * migrate: if a memory read comes from code occurring before (after)
      * invoking this method, the read is guaranteed to complete before (after)
      * the method is invoked.
      */
-    static void inline lfence()
-    {
+    static void inline lfence() {
+#ifdef SSE2NEON
+        __asm__ __volatile__("dsb ish" ::: "memory");
+#else
         __asm__ __volatile__("lfence" ::: "memory");
+#endif
     }
 
     /**
@@ -44,9 +46,12 @@ class Fence {
      * invoking this method, the store is guaranteed to complete before (after)
      * the method is invoked.
      */
-    static void inline sfence()
-    {
+    static void inline sfence() {
+#ifdef SSE2NEON
+        __asm__ __volatile__("dmb sy" ::: "memory");
+#else
         __asm__ __volatile__("sfence" ::: "memory");
+#endif
     }
 
     /**
@@ -62,8 +67,7 @@ class Fence {
      *   that precedes this method (stores cannot be reflected in memory until
      *   after any preceding branches have been resolved).
      */
-    static void inline enter()
-    {
+    static void inline enter() {
         lfence();
     }
 
@@ -79,12 +83,11 @@ class Fence {
      *   the critical section it is guaranteed to see any changes made in the
      *   current critical section.
      */
-    static void inline leave()
-    {
+    static void inline leave() {
         sfence();
         lfence();
     }
 };
-}; // namespace NanoLogInternal
+};     // namespace NanoLogInternal
 
-#endif  // FENCE_H
+#endif // FENCE_H

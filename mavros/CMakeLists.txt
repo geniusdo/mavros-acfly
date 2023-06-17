@@ -1,27 +1,30 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mavros)
-
+option(ARM "if ARM" ON)
+option(LOG "if LOG" ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-std=c++17 -O3" ) 
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g -pthread")
 ADD_COMPILE_OPTIONS(-std=c++17 )
-ADD_COMPILE_OPTIONS(-fPIC)
-set(CMAKE_C_FLAGS“$ {CMAKE_C_FLAGS} -fPIC”)
-set(CMAKE_CXX_FLAGS“$ {CMAKE_CXX_FLAGS} -fPIC”)
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 SET(ROOT_DIR ${CMAKE_SOURCE_DIR}/..)
+IF(ARM)
+add_definitions(-DSSE2NEON)
+endif(ARM)
+IF(LOG)
+add_definitions(-DLOG_ENABLE)
+endif(LOG)
 include_directories(${ROOT_DIR}/3rdLib/nanolog)
 add_library(nanolog STATIC 
       ${ROOT_DIR}/3rdLib/nanolog/Cycles.cc
       ${ROOT_DIR}/3rdLib/nanolog/Log.cc
 	    ${ROOT_DIR}/3rdLib/nanolog/NanoLog.cc
-	    ${ROOT_DIR}/3rdLib/nanolog/Perf.cc
-	    ${ROOT_DIR}/3rdLib/nanolog/PerfHelper.cc
 	    ${ROOT_DIR}/3rdLib/nanolog/RuntimeLogger.cc
 	    ${ROOT_DIR}/3rdLib/nanolog/TimeTrace.cc
 	    ${ROOT_DIR}/3rdLib/nanolog/Util.cc   
 	    ${ROOT_DIR}/3rdLib/nanolog/GeneratedCode.cc   
 	    )
+set_property(TARGET nanolog PROPERTY POSITION_INDEPENDENT_CODE ON)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages

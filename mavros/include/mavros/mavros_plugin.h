@@ -22,7 +22,7 @@
 #include <vector>
 
 //comment this line to disable log
-#define LOG_ENABLE
+// #define LOG_ENABLE
 
 
 namespace mavros {

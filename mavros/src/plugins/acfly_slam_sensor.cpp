@@ -17,6 +17,7 @@
 
 #include "log.hpp"
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <std_msgs/Bool.h>
@@ -98,7 +99,7 @@ public:
         // 回环检测
         loop_sub = ass_nh.subscribe("loop", 10, &AcflySlamSensorPlugin::loop_cb, this);
 
-        debug_pub = ass_nh.advertise<geometry_msgs::PoseStamped>("debug", 1000);
+        debug_pub = ass_nh.advertise<geometry_msgs::TwistStamped>("debug", 1000);
     }
 
     Subscriptions get_subscriptions() override {
@@ -182,9 +183,11 @@ private:
             //          tr_sensor_body(2, 2));
             // ROS_INFO("--------------------");
 
-            geometry_msgs::PoseStamped debug_msg;
+            geometry_msgs::TwistStamped debug_msg;
             debug_msg.header = odom_msg->header;
-            tf::poseEigenToMsg(tr, debug_msg.pose);
+            debug_msg.twist.linear.x = linear_vel(0);
+            debug_msg.twist.linear.y = linear_vel(1);
+            debug_msg.twist.linear.z = linear_vel(2);
             debug_pub.publish(debug_msg);
 
 #ifdef LOG_ENABLE

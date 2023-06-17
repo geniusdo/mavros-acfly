@@ -20,7 +20,12 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#ifdef SSE2NEON
+#include "sse2neon.h"
+#endif
+#ifndef SSE2NEON
 #include <xmmintrin.h>
+#endif
 
 #include "Cycles.h"
 

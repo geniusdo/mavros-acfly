@@ -15,7 +15,7 @@
 #include "log.hpp"
 int main(int argc, char *argv[]) {
     ros::init(argc, argv, "mavros");
-    initLog("/tmp/MavrosLog");
+    initLog("/Code/acfly_ws/src/mavros-acfly/logs/logFile");
     mavros::MavRos mavros;
     mavros.spin();
 
