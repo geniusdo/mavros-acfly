@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mavros)
-option(ARM "if ARM" ON)
+option(ARM "if ARM" OFF)
 option(LOG "if LOG" ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-std=c++17 -O3" ) 

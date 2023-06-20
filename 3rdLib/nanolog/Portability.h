@@ -27,9 +27,7 @@
 #define NANOLOG_PACK_PUSH
 #define NANOLOG_PACK_POP
 #endif
-#ifndef SSE2NEON
-#define SSE2NEON
-#endif
+
 #ifdef SSE2NEON
 #include "sse2neon.h"
 #else
