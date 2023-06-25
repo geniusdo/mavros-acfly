@@ -2,7 +2,7 @@
 #include <string>
 using namespace NanoLog::LogLevels;
 
-static void initLog(char *file) {
+static void initLog(const char *file) {
     NanoLog::setLogFile(file);
     NanoLog::preallocate();
     NanoLog::setLogLevel(NOTICE);

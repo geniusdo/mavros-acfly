@@ -4,13 +4,14 @@
 
 <launch>
   <!-- mavlink连接参数 -->
-  <arg name="fcu_url"             default="/dev/ttyTHS0:921600" />
+  <arg name="fcu_url"             default="/dev/ttyACM0:921600" />
   <arg name="gcs_url"             default="udp://@" />
   <arg name="tgt_system"          default="1" />
   <arg name="tgt_component"       default="1" />
   <arg name="log_output"          default="screen" />
   <arg name="fcu_protocol"        default="v2.0" />
   <arg name="respawn_mavros"      default="false" />
+  <arg name="log_path"             default="/home/do/acfly_ws/src/mavros-acfly/logs/logFile" />
 
   <!-- mavros参数文件 -->
   <arg name="pluginlists_yaml"    default="$(find mavros)/launch/acfly_pluginlist.yaml" />
@@ -29,5 +30,6 @@
     <arg name="log_output"        value="$(arg log_output)"/>
     <arg name="fcu_protocol"      value="$(arg fcu_protocol)"/>
     <arg name="respawn_mavros"    value="$(arg respawn_mavros)"/>
+    <arg name="log_path"           value="$(arg log_path)"/>
   </include>
 </launch>

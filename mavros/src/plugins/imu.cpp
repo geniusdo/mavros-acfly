@@ -24,7 +24,7 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
 #include <sensor_msgs/Temperature.h>
-
+#include "log.hpp"
 namespace mavros {
 namespace std_plugins {
 // 单位转换比例系数

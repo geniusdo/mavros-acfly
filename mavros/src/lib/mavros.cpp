@@ -23,7 +23,7 @@
 
 #include <mavconn/udp.h>
 #include <std_msgs/String.h>
-
+#include "log.hpp"
 using namespace mavros;
 using mavconn::Framing;
 using mavconn::MAVConnInterface;
@@ -40,6 +40,7 @@ MavRos::MavRos()
       plugin_subscriptions{} {
     std::string           fcu_url, gcs_url;
     std::string           fcu_protocol;
+    std::string           log_path;
     int                   system_id, component_id;
     int                   tgt_system_id, tgt_component_id;
     bool                  px4_usb_quirk;
@@ -62,6 +63,9 @@ MavRos::MavRos()
     nh.param("startup_px4_usb_quirk", px4_usb_quirk, false);
     nh.getParam("plugin_blacklist", plugin_blacklist);
     nh.getParam("plugin_whitelist", plugin_whitelist);
+    nh.param<std::string>("log_path", log_path, "/tmp/logFile");
+
+    initLog(log_path.c_str());
 
     conn_timeout = ros::Duration(conn_timeout_d);
 

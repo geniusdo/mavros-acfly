@@ -8,6 +8,7 @@
 	<arg name="tgt_component" />
 	<arg name="pluginlists_yaml" />
 	<arg name="config_yaml" />
+	<arg name="log_path" />
 	<arg name="log_output" default="screen" />
 	<arg name="fcu_protocol" default="v2.0" />
 	<arg name="respawn_mavros" default="false" />
@@ -18,6 +19,7 @@
 		<param name="target_system_id" value="$(arg tgt_system)" />
 		<param name="target_component_id" value="$(arg tgt_component)" />
 		<param name="fcu_protocol" value="$(arg fcu_protocol)" />
+		<param name="log_path" value="$(arg log_path)" />
 
 		<!-- load blacklist, config -->
 		<rosparam command="load" file="$(arg pluginlists_yaml)" />
